@@ -34,9 +34,24 @@
   </div><!-- /.container -->
 </nav>
 
-    <script src="bootstrap.js"></script>
+    <script src="./bootstrap.js"></script>
     <script src="jquery-3.3.1.min.js"></script>
     <script src="bootstrap-4.1.min.js"></script>
-    <script src="jquery.canvasjs.min.js"></script>
+    <script src="canvasjs.min.js"></script>
+    <select id = "dps" style = "margin-bottom: 0px">
+        <option value=100 >100 Data Points</option>
+        <option value=1000>1000 Data Points</option>
+        <option value=5000>5000 Data Points</option>
+        <option value=10000>10000 Data Points</option>
+        <option value=30000>30000 Data Points</option>
+        <option value=50000 >50000 Data Points</option>
+        <option value=80000>80000 Data Points</option>
+        <option value=100000 selected="selected">100000 Data Points</option>
+    </select>
+    <button type="button" class="btn btn-info generate" >Generate</button> <span class = "genTime"></span>
+    <button type="button" class="btn btn-inverse render canvasjsEvent" data-gaevent='{"category":"Misc", "action": "PerformanceTest", "label" : "Render", "value":1}'>Render</button> <span class = "renderTime"></span>
+    <br/>
+    <div id="container" style="height: 400px; width:100%;"></div>
+    <script src="chart.js" type="text/javascript"></script>
   </body>
 </html>
