@@ -6,17 +6,22 @@ var analyser;
 var notes;
 var note_counter;
 var performanceChart;
+var first_note = true;
 
 
 var dps = 5000;
 
 function init_notes() {
-  notes = "X: 1\nT:visumusic\nM:4/4\nL:1/8\nK:Emin\n|";
+  notes = "X: 1\nT:visumusic\nM:4/4\nL:1/4\nK:none\n|";
   console.log('init notes');
   note_counter = 0;
 }
 
 function update_notes() {
+  if (first_note) {
+    first_note = false;
+    return;
+  }
   var freq = wasm.get_max_frequency(analyser);
   var note = wasm.note_for_frequency(freq);
   notes += note;
