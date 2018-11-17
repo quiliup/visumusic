@@ -44,11 +44,11 @@ pub fn get_max_frequency(analyser: &AnalyserNode) -> f32 {
     let plan = Plan::new(Operation::Forward, data.len());
     data.transform(&plan);
     let mut complex = dft::unpack(&data);
-    let len = complex.len() / 2;
+    let len = complex.len() / 4;
     let ft_res = complex.drain(..).take(len)
         .map(|c| c.re).collect::<Vec<_>>();
     let data = ft_res;
-    log(&format!("{:?}", data));
+    // log(&format!("{:?}", data));
 
     // Search maximum
     if let Some(m) = data.iter().cloned().enumerate().max_by(|(_, d1), (_, d2)| {
@@ -65,6 +65,21 @@ pub fn get_max_frequency(analyser: &AnalyserNode) -> f32 {
     } else {
         -1.0
     }
+}
+
+#[wasm_bindgen]
+pub fn get_data(analyser: &AnalyserNode) -> Vec<f32> {
+    //let mut data = vec![0f32; analyser.frequency_bin_count() as usize];
+    //analyser.get_float_frequency_data(&mut data);
+    let mut data = vec![0f32; analyser.fft_size() as usize];
+    analyser.get_float_time_domain_data(&mut data);
+    let plan = Plan::new(Operation::Forward, data.len());
+    data.transform(&plan);
+    let mut complex = dft::unpack(&data);
+    let len = complex.len() / 4;
+    let ft_res = complex.drain(..).take(len)
+        .map(|c| c.re).collect::<Vec<_>>();
+    ft_res
 }
 
 #[wasm_bindgen]

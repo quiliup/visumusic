@@ -5,6 +5,10 @@ var dataArray;
 var analyser;
 var notes;
 var note_counter;
+var performanceChart;
+
+
+var dps = 5000;
 
 function init_notes() {
   notes = "X: 1\nT:visumusic\nM:4/4\nL:1/8\nK:Emin\n|";
@@ -28,9 +32,10 @@ function update_notes() {
 }
 
 function draw() {
-    analyser.getFloatFrequencyData(dataArray);
-    //console.log("data: " + dataArray);
-    update();
+  analyser.getFloatFrequencyData(dataArray);
+  //console.log("data: " + dataArray);
+  update();
+  //dataArray = wasm.get_data(analyser);
   update_notes();
   abcjs.renderAbc("notation", notes, { scale: 2.0 });
   setTimeout(draw, 1000);
@@ -43,12 +48,8 @@ async function run() {
     console.log("Setup is ready");
     setInterval(wasm.analyse_audio, 1000, analyser);
     draw();
-}
-
-
-var dps = 5000;
-var data = [];
-var performanceChart = new CanvasJS.Chart("container",
+    update();
+    performanceChart = new CanvasJS.Chart("container",
     {
         zoomEnabled: false,
         panEnabled: false,
@@ -56,11 +57,18 @@ var performanceChart = new CanvasJS.Chart("container",
             horizontalAlign: "right",
             verticalAlign: "center"
         },
-        axisY:{
+        axisX: {
+          title: "Frequency",
+          logarithmic: true,
+          logarithmBase: 2
+        },
+        axisY: {
             includeZero: false
         },
-        data: data,  // random generator below
+        data: [],  // random generator below
     });
+}
+
 function render() {
     var startRender = new Date();
     performanceChart.render();
@@ -70,13 +78,14 @@ function render() {
     //  jQuery(".generate").removeClass('active');
     //jQuery(".renderTime").text((endRender - startRender) + " ms");
 }
+
 function update(){
     var dataPoints = [];
-    if (analyser === undefined)
+    if (analyser === undefined || performanceChart === undefined)
         return;
     for (var i = 0; i < analyser.frequencyBinCount; i += 1) {
         dataPoints.push({
-            x: i,
+            x: i+1,
             y: dataArray[i]
         });
     }
