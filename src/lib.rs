@@ -36,7 +36,7 @@ extern "C" {
 }
 
 #[wasm_bindgen]
-pub fn analyse_audio(analyser: &AnalyserNode) {
+pub fn get_max_frequency(analyser: &AnalyserNode) -> f32 {
     //let mut data = vec![0f32; analyser.frequency_bin_count() as usize];
     //analyser.get_float_frequency_data(&mut data);
     let mut data = vec![0f32; analyser.fft_size() as usize];
@@ -61,10 +61,20 @@ pub fn analyse_audio(analyser: &AnalyserNode) {
         }
     }) {
         let rate = analyser.context().sample_rate();
-        let freq = get_freq2(m.0, rate, data.len());
-        log(&format!("Maximum (level: {:.3}, freq: {}): {}", m.1, freq,
-            note_for_frequency(freq)));
+        get_freq2(m.0, rate, data.len())
+    } else {
+        -1.0
     }
+}
+
+#[wasm_bindgen]
+pub fn analyse_audio(analyser: &AnalyserNode) {
+    let freq = get_max_frequency(analyser);
+    if freq < 0f32 { return; }
+    /* let rate = analyser.context().sample_rate();
+    let freq = get_freq2(m.0, rate, data.len());
+    log(&format!("Maximum (level: {:.3}, freq: {}): {}", m.1, freq,
+        note_for_frequency(freq))); */
 }
 
 fn get_freq(analyser: &AnalyserNode, bin: usize) -> f32 {

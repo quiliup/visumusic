@@ -48,10 +48,16 @@
         <option value=80000>80000 Data Points</option>
         <option value=100000 selected="selected">100000 Data Points</option>
     </select>
+    <div id="notation" style="overflow: hidden; height: 484.526px;"></div>
     <button type="button" class="btn btn-info generate" >Generate</button> <span class = "genTime"></span>
     <button type="button" class="btn btn-inverse render canvasjsEvent" data-gaevent='{"category":"Misc", "action": "PerformanceTest", "label" : "Render", "value":1}'>Render</button> <span class = "renderTime"></span>
     <br/>
     <div id="container" style="height: 400px; width:100%;"></div>
     <script src="chart.js" type="text/javascript"></script>
   </body>
+  <style>
+  body { 
+    padding-top: 65px; 
+  }
+  </style>
 </html>
