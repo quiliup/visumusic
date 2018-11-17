@@ -24,6 +24,11 @@ function update_notes() {
   }
   var freq = wasm.get_max_frequency(analyser);
   var note = wasm.note_for_frequency(freq);
+
+  if (note.endsWith("''''") || note.endsWith(",,")) {
+    note = "z"
+  }
+
   notes += note;
   note_counter += 1;
   if (note_counter % 4 == 0) {
