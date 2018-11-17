@@ -34,6 +34,11 @@ function update_notes() {
     }
     var freq = wasm.get_max_frequency(analyser);
     var note = wasm.note_for_frequency(freq);
+
+  if (note.endsWith(",,") || note.endsWith("''")) {
+    note = "z"
+  }
+
     notes += note;
     note_counter += 1;
     if (note_counter % 4 == 0) {
@@ -44,7 +49,7 @@ function update_notes() {
     if (note_counter % 20 == 0) {
         notes += "\n|"
     }
-    abcjs.renderAbc("notation", notes, { scale: 2.0 });
+  abcjs.renderAbc("notation", notes, { scale: 2.0 , staffwidth: 1000});
 }
 
 function update_chart(){

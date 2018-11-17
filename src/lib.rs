@@ -135,7 +135,7 @@ const NOTES: &[&str] = &[
 
 #[wasm_bindgen]
 pub fn note_for_frequency(frequency: f32) -> String {
-    let a4index = 47;
+    let a4index = 46;
     let note_diff = (12f32 * (frequency / 440f32).log2()).round() as usize;
     let index = a4index + note_diff;
     NOTES[index].to_string()
