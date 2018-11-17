@@ -7,6 +7,11 @@ detect notes and instruments in music
 build (in root folder)
 > wasm-pack build
 
+If npm has no access to your binary folders (so you get an EACCES error), execute the next command:
+```
+mkdir ~/.npm-global; npm config set prefix '~/.npm-global'
+```
+
 install dependencies (in www folder)
 > npm install
 

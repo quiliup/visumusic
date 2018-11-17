@@ -44,7 +44,9 @@ pub fn analyse_audio(analyser: &AnalyserNode) {
     let plan = Plan::new(Operation::Forward, data.len());
     data.transform(&plan);
     let mut complex = dft::unpack(&data);
-    let ft_res = complex.drain(..).map(|c| c.re).collect::<Vec<_>>();
+    let len = complex.len() / 2;
+    let ft_res = complex.drain(..).take(len)
+        .map(|c| c.re).collect::<Vec<_>>();
     let data = ft_res;
     log(&format!("{:?}", data));
 
@@ -58,7 +60,8 @@ pub fn analyse_audio(analyser: &AnalyserNode) {
             Ordering::Equal
         }
     }) {
-        let freq = get_freq(analyser, m.0);
+        let rate = analyser.context().sample_rate();
+        let freq = get_freq2(m.0, rate, data.len());
         log(&format!("Maximum (level: {:.3}, freq: {}): {}", m.1, freq,
             note_for_frequency(freq)));
     }
@@ -71,7 +74,14 @@ fn get_freq(analyser: &AnalyserNode, bin: usize) -> f32 {
     let bin_delta = rate / bins / 2f32;
     log(&format!("Sample rate: {} Hz\n#bins: {}\nper bin: {} Hz", rate, bins,
         bin_delta));
-    bin as f32 * bin_delta
+    //bin as f32 * bin_delta
+    (bin as f32 + 0.5) * bin_delta
+}
+
+fn get_freq2(bin: usize, rate: f32, bins: usize) -> f32 {
+    let bin_delta = rate / (bins as f32) / 2f32;
+    //bin as f32 * bin_delta
+    (bin as f32 + 0.5) * bin_delta
 }
 
 #[wasm_bindgen]
