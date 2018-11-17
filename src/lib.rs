@@ -1,4 +1,5 @@
 extern crate cfg_if;
+extern crate dft;
 extern crate futures;
 extern crate js_sys;
 extern crate wasm_bindgen;
@@ -10,6 +11,7 @@ mod utils;
 use std::cmp::Ordering;
 
 use cfg_if::cfg_if;
+use dft::{Transform, Operation, Plan};
 use futures::future::Future;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
@@ -34,9 +36,18 @@ extern "C" {
 }
 
 #[wasm_bindgen]
-pub fn analyse_audio(analyser: AnalyserNode) {
-    let mut data = vec![0f32; analyser.frequency_bin_count() as usize];
-    analyser.get_float_frequency_data(&mut data);
+pub fn analyse_audio(analyser: &AnalyserNode) {
+    //let mut data = vec![0f32; analyser.frequency_bin_count() as usize];
+    //analyser.get_float_frequency_data(&mut data);
+    let mut data = vec![0f32; analyser.fft_size() as usize];
+    analyser.get_float_time_domain_data(&mut data);
+    let plan = Plan::new(Operation::Forward, data.len());
+    data.transform(&plan);
+    let mut complex = dft::unpack(&data);
+    let ft_res = complex.drain(..).map(|c| c.re).collect::<Vec<_>>();
+    let data = ft_res;
+    log(&format!("{:?}", data));
+
     // Search maximum
     if let Some(m) = data.iter().cloned().enumerate().max_by(|(_, d1), (_, d2)| {
         if d1 > d2 {
@@ -47,8 +58,20 @@ pub fn analyse_audio(analyser: AnalyserNode) {
             Ordering::Equal
         }
     }) {
-        log(&format!("Maximum: {:?}", m));
+        let freq = get_freq(analyser, m.0);
+        log(&format!("Maximum (level: {:.3}, freq: {}): {}", m.1, freq,
+            note_for_frequency(freq)));
     }
+}
+
+fn get_freq(analyser: &AnalyserNode, bin: usize) -> f32 {
+    let rate = analyser.context().sample_rate();
+    //let bins = analyser.frequency_bin_count() as f32;
+    let bins = analyser.fft_size() as f32;
+    let bin_delta = rate / bins / 2f32;
+    log(&format!("Sample rate: {} Hz\n#bins: {}\nper bin: {} Hz", rate, bins,
+        bin_delta));
+    bin as f32 * bin_delta
 }
 
 #[wasm_bindgen]

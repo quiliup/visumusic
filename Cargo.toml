@@ -11,6 +11,7 @@ default = ["console_error_panic_hook"]
 
 [dependencies]
 cfg-if = "0.1.2"
+dft = "0.5"
 futures = "0.1"
 js-sys = "0.3"
 wasm-bindgen = "0.2"
@@ -31,9 +32,9 @@ wee_alloc = { version = "0.4.2", optional = true }
 
 [dependencies.web-sys]
 version = "0.3"
-features = ["AnalyserNode", "AudioContext", "AudioNode", "MediaDevices",
-	"MediaStream", "MediaStreamAudioSourceNode", "MediaStreamConstraints",
-	"Navigator", "Window"]
+features = ["AnalyserNode", "AudioContext", "AudioNode", "BaseAudioContext",
+	"MediaDevices", "MediaStream", "MediaStreamAudioSourceNode",
+	"MediaStreamConstraints", "Navigator", "Window"]
 
 [dev-dependencies]
 wasm-bindgen-test = "0.2"
