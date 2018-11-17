@@ -51,7 +51,8 @@ pub fn get_max_frequency(analyser: &AnalyserNode) -> f32 {
     // log(&format!("{:?}", data));
 
     // Search maximum
-    if let Some(m) = data.iter().cloned().enumerate().max_by(|(_, d1), (_, d2)| {
+    if let Some(m) = data.iter().cloned().enumerate()
+        .max_by(|(_, d1), (_, d2)| {
         if d1 > d2 {
             Ordering::Greater
         } else if d1 < d2 {
@@ -61,7 +62,7 @@ pub fn get_max_frequency(analyser: &AnalyserNode) -> f32 {
         }
     }) {
         let rate = analyser.context().sample_rate();
-        get_freq2(m.0, rate, data.len())
+        get_freq(m.0, rate, data.len())
     } else {
         -1.0
     }
@@ -69,16 +70,15 @@ pub fn get_max_frequency(analyser: &AnalyserNode) -> f32 {
 
 #[wasm_bindgen]
 pub fn get_data(analyser: &AnalyserNode) -> Vec<f32> {
-    //let mut data = vec![0f32; analyser.frequency_bin_count() as usize];
-    //analyser.get_float_frequency_data(&mut data);
     let mut data = vec![0f32; analyser.fft_size() as usize];
     analyser.get_float_time_domain_data(&mut data);
+
     let plan = Plan::new(Operation::Forward, data.len());
     data.transform(&plan);
     let mut complex = dft::unpack(&data);
-    let len = complex.len() / 4;
+    let len = complex.len();
     let ft_res = complex.drain(..).take(len)
-        .map(|c| c.re).collect::<Vec<_>>();
+        .map(|c| c.norm()).collect::<Vec<_>>();
     ft_res
 }
 
@@ -92,20 +92,8 @@ pub fn analyse_audio(analyser: &AnalyserNode) {
         note_for_frequency(freq))); */
 }
 
-fn get_freq(analyser: &AnalyserNode, bin: usize) -> f32 {
-    let rate = analyser.context().sample_rate();
-    //let bins = analyser.frequency_bin_count() as f32;
-    let bins = analyser.fft_size() as f32;
-    let bin_delta = rate / bins / 2f32;
-    log(&format!("Sample rate: {} Hz\n#bins: {}\nper bin: {} Hz", rate, bins,
-        bin_delta));
-    //bin as f32 * bin_delta
-    (bin as f32 + 0.5) * bin_delta
-}
-
-fn get_freq2(bin: usize, rate: f32, bins: usize) -> f32 {
+fn get_freq(bin: usize, rate: f32, bins: usize) -> f32 {
     let bin_delta = rate / (bins as f32) / 2f32;
-    //bin as f32 * bin_delta
     (bin as f32 + 0.5) * bin_delta
 }
 
@@ -114,7 +102,7 @@ pub fn setup() -> Result<Promise, JsValue> {
     let audio = AudioContext::new()?;
     let analyser = audio.create_analyser()?;
     // 0 means no time averaging, 1 means no change (old * (1-val) + new * val)
-    analyser.set_smoothing_time_constant(0.1);
+    analyser.set_smoothing_time_constant(0.0);
 
     let window = web_sys::window().unwrap();
     let navigator = window.navigator();

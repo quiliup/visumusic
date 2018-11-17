@@ -37,9 +37,9 @@ function update_notes() {
 }
 
 function draw() {
-  analyser.getFloatFrequencyData(dataArray);
+  //analyser.getFloatFrequencyData(dataArray);
   //console.log("data: " + dataArray);
-  //dataArray = wasm.get_data(analyser);
+  dataArray = wasm.get_data(analyser);
   update_notes();
   abcjs.renderAbc("notation", notes, { scale: 2.0 });
   setTimeout(draw, 1000);
@@ -72,16 +72,6 @@ async function run() {
     });
 }
 
-function render() {
-    var startRender = new Date();
-    performanceChart.render();
-    var endRender = new Date();
-    //jQuery(".render").addClass('disabled');
-    //jQuery(".generate").removeClass('disabled');
-    //  jQuery(".generate").removeClass('active');
-    //jQuery(".renderTime").text((endRender - startRender) + " ms");
-}
-
 function update(){
     var dataPoints = [];
     if (analyser === undefined || performanceChart === undefined)
@@ -93,7 +83,7 @@ function update(){
         });
     }
     performanceChart.options.data = [{type: "line", dataPoints: dataPoints}];
-    render();
+    performanceChart.render();
 }
 run();
 setInterval(update, 50);
