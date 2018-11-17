@@ -25,7 +25,7 @@ function update_notes() {
   var freq = wasm.get_max_frequency(analyser);
   var note = wasm.note_for_frequency(freq);
 
-  if (note.endsWith("''''") || note.endsWith(",,")) {
+  if (note.endsWith(",,") || note.endsWith("''")) {
     note = "z"
   }
 
@@ -46,7 +46,7 @@ function draw() {
   //console.log("data: " + dataArray);
   dataArray = wasm.get_data(analyser);
   update_notes();
-  abcjs.renderAbc("notation", notes, { scale: 2.0 });
+  abcjs.renderAbc("notation", notes, { scale: 2.0 , staffwidth: 1000});
   setTimeout(draw, 1000);
 }
 
