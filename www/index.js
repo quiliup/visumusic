@@ -4,16 +4,27 @@ import abcjs from "abcjs";
 var dataArray;
 var analyser;
 var notes;
+var note_counter;
 
 function init_notes() {
-  notes = "X: 1\nT:visumusic\nM:4/4\nL:1/8\nK:Emin\n|D2|EB|";
+  notes = "X: 1\nT:visumusic\nM:4/4\nL:1/8\nK:Emin\n|";
   console.log('init notes');
+  note_counter = 0;
 }
 
 function update_notes() {
   var freq = wasm.get_max_frequency(analyser);
   var note = wasm.note_for_frequency(freq);
   notes += note;
+  note_counter += 1;
+  if (note_counter % 4 == 0) {
+    notes += "|"
+  } else {
+    notes += " "
+  }
+  if (note_counter % 20 == 0) {
+    notes += "\n|"
+  }
 }
 
 function draw() {
