@@ -9,6 +9,12 @@ module.exports = {
   },
   mode: "development",
   plugins: [
-    new CopyWebpackPlugin(['index.html'])
+    new CopyWebpackPlugin([
+      'index.html',
+      'bootstrap.min.css',
+      'bootstrap-4.1.min.js',
+      'canvasjs.min.js',
+      'jquery-3.3.1.min.js'
+    ])
   ],
 };
