@@ -14,7 +14,8 @@ cfg-if = "0.1.2"
 dft = "0.5"
 futures = "0.1"
 js-sys = "0.3"
-wasm-bindgen = "0.2"
+serde = "1"
+serde_derive = "1"
 wasm-bindgen-futures = "0.3"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
@@ -35,6 +36,10 @@ version = "0.3"
 features = ["AnalyserNode", "AudioContext", "AudioNode", "BaseAudioContext",
 	"MediaDevices", "MediaStream", "MediaStreamAudioSourceNode",
 	"MediaStreamConstraints", "Navigator", "Window"]
+
+[dependencies.wasm-bindgen]
+version = "0.2"
+features = ["serde-serialize"]
 
 [dev-dependencies]
 wasm-bindgen-test = "0.2"

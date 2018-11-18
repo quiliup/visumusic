@@ -2,6 +2,9 @@ extern crate cfg_if;
 extern crate dft;
 extern crate futures;
 extern crate js_sys;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
 extern crate wasm_bindgen;
 extern crate wasm_bindgen_futures;
 extern crate web_sys;
@@ -39,50 +42,49 @@ const MIN_FREQ: f32 = 00.0;
 const MAX_FREQ: f32 = 20_000.0;
 
 #[wasm_bindgen]
-pub struct FreqData {
-    pub min: f32,
-    pub max: f32,
-    data: Vec<f32>,
-}
-
-#[wasm_bindgen]
 pub struct MaxFreq {
     /// The maximum frequency.
     pub freq: f32,
-    /// The volume in db.
+    /// The volume.
     pub val: f32,
 }
 
-#[wasm_bindgen]
-impl FreqData {
-    pub fn get_data(&self) -> Vec<f32> {
-        self.data.clone()
-    }
+#[derive(Serialize)]
+struct DataEntry {
+    /// The frequency
+    x: f32,
+    /// The volume.
+    y: f32,
+}
+
+#[derive(Serialize)]
+struct PeakEntry {
+    /// The frequency
+    x: f32,
+    /// The volume.
+    y: f32,
+    /// The index into the data array.
+    index: usize,
 }
 
 #[wasm_bindgen]
 pub fn get_max_frequency(analyser: &AnalyserNode) -> MaxFreq {
-    let data = get_data(analyser);
-    let bin_delta = (data.max - data.min) / data.data.len() as f32;
-
+    let data = get_data_intern(analyser);
     // Search maximum
-    let (i, val) = data.data.iter().cloned().enumerate()
-        .max_by(|(_, d1), (_, d2)| {
-            if d1 > d2 {
-                Ordering::Greater
-            } else if d1 < d2 {
-                Ordering::Less
-            } else {
-                Ordering::Equal
-            }
-        }).unwrap();
-    let freq = data.min + (i as f32 + 0.5) * bin_delta;
-    log(&format!("i: {} -> {}     (Del: {})", i, freq, bin_delta));
-    MaxFreq { freq, val }
+    let d = data.iter().max_by(|d1, d2| {
+        if d1.y > d2.y {
+            Ordering::Greater
+        } else if d1.y < d2.y {
+            Ordering::Less
+        } else {
+            Ordering::Equal
+        }
+    }).unwrap();
+    //log(&format!("i: {} -> {}     (Del: {})", i, freq, bin_delta));
+    MaxFreq { freq: d.x, val: d.y }
 }
 
-#[wasm_bindgen]
-pub fn get_data(analyser: &AnalyserNode) -> FreqData {
+fn get_data_intern(analyser: &AnalyserNode) -> Vec<DataEntry> {
     let mut data = vec![0f32; analyser.fft_size() as usize];
     analyser.get_float_time_domain_data(&mut data);
 
@@ -98,13 +100,20 @@ pub fn get_data(analyser: &AnalyserNode) -> FreqData {
     // Cut off left and right
     let start = (MIN_FREQ / bin_delta) as usize;
     let end = ft_res.len() - (((rate - MAX_FREQ) / bin_delta) as usize);
-    let data = ft_res[start..end].to_vec();
+    let data = &ft_res[start..end];
 
-    FreqData {
-        min: start as f32 * bin_delta,
-        max: end as f32 * bin_delta,
-        data,
+    let mut res = Vec::with_capacity(data.len());
+    let mut x = (start as f32 + 0.5) * bin_delta;
+    for &y in data {
+        res.push(DataEntry { x, y });
+        x += bin_delta;
     }
+    res
+}
+
+#[wasm_bindgen]
+pub fn get_data(analyser: &AnalyserNode) -> JsValue {
+    JsValue::from_serde(&get_data_intern(analyser)).unwrap()
 }
 
 #[wasm_bindgen]
@@ -151,6 +160,6 @@ pub fn note_for_frequency(frequency: f32) -> String {
         return "^A,,,,,,,,,".to_string();
     }
     let index = (a4index + note_diff) as usize;
-    log(&format!("{} -> {}", frequency, NOTES[index]));
+    //log(&format!("{} -> {}", frequency, NOTES[index]));
     NOTES[index].to_string()
 }
