@@ -17,7 +17,7 @@ var performanceChart = new CanvasJS.Chart("container",
             verticalAlign: "center"
         },
         axisX: {
-            title: "Frequency",
+            title: "Frequency in Hz",
             logarithmic: true,
             logarithmBase: 2
         },
@@ -38,19 +38,24 @@ function update_notes() {
     var freq = max_freq.freq; // max_freq.value
     var note = wasm.note_for_frequency(freq);
 
-    if (note.endsWith(",,,") || note.endsWith("''")) {
+    if (note.endsWith(",,") || note.endsWith("''")) {
       note = "z"
     }
 
     notes += note;
     note_counter += 1;
     if (note_counter % 4 == 0) {
-        notes += "|"
+        notes += "|";
     } else {
-        notes += " "
+        notes += " ";
     }
     if (note_counter % 20 == 0) {
-        notes += "\n|"
+        notes += "\n|";
+        var split = notes.split(/\n/)
+        if (split.length > 5 + 2) {
+            // Remove a line
+            notes = split.slice(0, 5).join("\n") + "\n" + split[6] + "\n" + split[7];
+        }
     }
     abcjs.renderAbc("notation", notes, { scale: 2.0 , staffwidth: 1000});
 }
@@ -81,7 +86,6 @@ async function run() {
     notes = "X: 1\nT:visumusic\nM:4/4\nL:1/4\nK:none\n|";
     analyser = await wasm.setup();
     console.log("Setup is ready");
-    //setInterval(wasm.analyse_audio, 1000, analyser);
     setInterval(update_notes, 1000);
     setInterval(update_chart, 50);
 }
