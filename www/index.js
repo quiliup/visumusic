@@ -1,11 +1,13 @@
 import * as wasm from "visumusic";
 import abcjs from "abcjs";
 
-var dataArray;
-var analyser;
 var notes; // string
 var note_counter = 0;
 var first_note = true;
+var last_y_max = 10;
+var this_y_max = 10;
+var next_y_max = 10;
+var analyser;
 var performanceChart = new CanvasJS.Chart("container",
     {
         zoomEnabled: false,
@@ -55,12 +57,24 @@ function update_notes() {
 
 function update_chart() {
     let update_chart_start = new Date();
-    let dataPoints = dataArray = wasm.get_data(analyser);
+    let dataPoints = wasm.get_data(analyser);
     performanceChart.options.data = [{type: "line", dataPoints: dataPoints}];
-    performanceChart.render();
-    let update_chart_end = new Date();
-    console.log("update took " + (update_chart_end-update_chart_start) + "ms");
     //console.log(dataArray.max);
+    var peaks = wasm.get_peaks(analyser);
+    this_y_max = peaks.max*1.1;
+    peaks = peaks.peaks;
+    for(var obj in peaks) {
+        console.log("object has obj.x:" + obj.x +
+                    " obj.y: " + obj.y +
+                    " obj.index: " + obj.index);
+    }
+    // The following line does not work but is needed for functionality
+    //performanceChart.axisY[0].maximum = this_y_max;
+    //console.log(performanceChart.axisY[0].maximum);
+    performanceChart.render();
+
+    let update_chart_end = new Date();
+    //console.log("update took " + (update_chart_end-update_chart_start) + "ms");
 }
 
 async function run() {
