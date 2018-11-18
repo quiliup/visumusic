@@ -24,7 +24,7 @@ var performanceChart = new CanvasJS.Chart("container",
         axisY: {
             includeZero: false,
             minimum: 0,
-            maximum: 10
+            maximum: 30
         },
         data: [],
     });
@@ -63,19 +63,20 @@ function update_notes() {
 function update_chart() {
     let update_chart_start = new Date();
     let dataPoints = wasm.get_data(analyser);
-    performanceChart.options.data = [{type: "line", dataPoints: dataPoints}];
     //console.log(dataArray.max);
     var peaks = wasm.get_peaks(analyser);
     this_y_max = peaks.max*1.1;
     peaks = peaks.peaks;
+    console.log(peaks.length);
     for(var obj in peaks) {
-        console.log("object has obj.x:" + obj.x +
-                    " obj.y: " + obj.y +
-                    " obj.index: " + obj.index);
+        //dataPoints[peaks[obj].index].markerColor = "red";
+        //dataPoints[peaks[obj].index].markerType = "triangle";
+        dataPoints[peaks[obj].index].indexLabel = dataPoints[peaks[obj].index].x + "Hz";
     }
     // The following line does not work but is needed for functionality
     //performanceChart.axisY[0].maximum = this_y_max;
     //console.log(performanceChart.axisY[0].maximum);
+    performanceChart.options.data = [{type: "line", dataPoints: dataPoints}];
     performanceChart.render();
 
     let update_chart_end = new Date();
