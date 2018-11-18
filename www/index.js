@@ -83,7 +83,7 @@ function update_chart() {
 }
 
 async function run() {
-    notes = "X: 1\nT:visumusic\nM:4/4\nL:1/4\nK:none\n|";
+    notes = "X: 1\nT:visumusic\nM:4/4\nL:1/4\nK:treble-8\n|";
     analyser = await wasm.setup();
     console.log("Setup is ready");
     setInterval(update_notes, 1000);
