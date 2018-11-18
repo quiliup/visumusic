@@ -17,7 +17,7 @@ var performanceChart = new CanvasJS.Chart("container",
         axisX: {
             title: "Frequency",
             logarithmic: true,
-            logarithmBase: 2
+            logarithmBase: 10
         },
         axisY: {
             includeZero: false,
@@ -32,8 +32,8 @@ function update_notes() {
         first_note = false;
         return;
     }
-    var max_freq = wasm.get_max_frequency(analyser);
-    var freq = max_freq.freq;
+    var max_freq = wasm.get_max_frequency(analyser); // array [i,
+    var freq = max_freq.freq; // max_freq.value
     var note = wasm.note_for_frequency(freq);
 
     if (note.endsWith(",,") || note.endsWith("''")) {
@@ -54,11 +54,15 @@ function update_notes() {
 }
 
 function update_chart() {
+    let update_chart_start = new Date();
     dataArray = wasm.get_data(analyser);
     let data = dataArray.get_data();
     var dataPoints = [];
     if (analyser === undefined)
         return;
+    let min = dataArray.min;
+    let max = dataArray.max;
+    let step = (max-min);
     for (var i = 0; i < data.length; i += 1) {
         dataPoints.push({
             x: i+1,
@@ -67,6 +71,9 @@ function update_chart() {
     }
     performanceChart.options.data = [{type: "line", dataPoints: dataPoints}];
     performanceChart.render();
+    let update_chart_end = new Date();
+    console.log("update took " + (update_chart_end-update_chart_start) + "ms");
+    //console.log(dataArray.max);
 }
 
 async function run() {
