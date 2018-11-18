@@ -67,6 +67,13 @@ struct PeakEntry {
     index: usize,
 }
 
+#[derive(Serialize)]
+struct PeakResult {
+    /// The volume of the highest peak.
+    max: f32,
+    peaks: Vec<PeakEntry>,
+}
+
 #[wasm_bindgen]
 pub fn get_max_frequency(analyser: &AnalyserNode) -> MaxFreq {
     let data = get_data_intern(analyser);
@@ -116,7 +123,7 @@ pub fn get_data(analyser: &AnalyserNode) -> JsValue {
     JsValue::from_serde(&get_data_intern(analyser)).unwrap()
 }
 
-fn get_peaks_intern(analyser: &AnalyserNode) -> Vec<PeakEntry> {
+fn get_peaks_intern(analyser: &AnalyserNode) -> PeakResult {
     let data = get_data_intern(analyser);
     //let avg: f32 = data.iter().map(|v| v.y).sum::<f32>() / data.len() as f32;
     let mut max = 0f32;
@@ -149,7 +156,7 @@ fn get_peaks_intern(analyser: &AnalyserNode) -> Vec<PeakEntry> {
 
     peaks.retain(|PeakEntry { y, .. }| *y > max / 3.0);
 
-    peaks
+    PeakResult { max, peaks }
 }
 
 #[wasm_bindgen]
