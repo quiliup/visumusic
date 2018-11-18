@@ -4,9 +4,7 @@ import abcjs from "abcjs";
 var notes; // string
 var note_counter = 0;
 var first_note = true;
-var last_y_max = 10;
 var this_y_max = 10;
-var next_y_max = 10;
 var analyser;
 var performanceChart = new CanvasJS.Chart("container",
     {
@@ -24,7 +22,7 @@ var performanceChart = new CanvasJS.Chart("container",
         axisY: {
             includeZero: false,
             minimum: 0,
-            maximum: 30
+            maximum: this_y_max
         },
         data: [],
     });
@@ -65,7 +63,7 @@ function update_chart() {
     let dataPoints = wasm.get_data(analyser);
     //console.log(dataArray.max);
     var peaks = wasm.get_peaks(analyser);
-    this_y_max = peaks.max*1.1;
+    this_y_max = this_y_max * 0.95 + peaks.max * 0.05;
     peaks = peaks.peaks;
     for(var obj in peaks) {
         //dataPoints[peaks[obj].index].markerColor = "red";
@@ -73,9 +71,9 @@ function update_chart() {
         dataPoints[peaks[obj].index].indexLabel = dataPoints[peaks[obj].index].x + "Hz";
     }
     // The following line does not work but is needed for functionality
-    //performanceChart.axisY[0].maximum = this_y_max;
     //console.log(performanceChart.axisY[0].maximum);
     performanceChart.options.data = [{type: "line", dataPoints: dataPoints}];
+    performanceChart.options.axisY.maximum = this_y_max;
     performanceChart.render();
 
     let update_chart_end = new Date();
