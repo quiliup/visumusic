@@ -40,6 +40,7 @@ extern "C" {
 
 const MIN_FREQ: f32 = 00.0;
 const MAX_FREQ: f32 = 20_000.0;
+const AVG_FACTOR: f32 = 2.0;
 
 #[wasm_bindgen]
 pub struct MaxFreq {
@@ -114,6 +115,26 @@ fn get_data_intern(analyser: &AnalyserNode) -> Vec<DataEntry> {
 #[wasm_bindgen]
 pub fn get_data(analyser: &AnalyserNode) -> JsValue {
     JsValue::from_serde(&get_data_intern(analyser)).unwrap()
+}
+
+fn get_peaks_intern(analyser: &AnalyserNode) -> Vec<PeakEntry> {
+    let data = get_data_intern(analyser);
+    let avg: f32 = data.iter().map(|v| v.y).sum::<f32>() / data.len() as f32;
+    let avg = avg * AVG_FACTOR;
+
+    // Collect all peaks higher than `avg`
+    let mut peaks = Vec::new();
+    for (index, &DataEntry { x, y }) in data.iter().enumerate() {
+        if y > avg {
+            peaks.push(PeakEntry { x, y, index });
+        }
+    }
+    peaks
+}
+
+#[wasm_bindgen]
+pub fn get_peaks(analyser: &AnalyserNode) -> JsValue {
+    JsValue::from_serde(&get_peaks_intern(analyser)).unwrap()
 }
 
 #[wasm_bindgen]
