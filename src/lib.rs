@@ -40,7 +40,6 @@ extern "C" {
 
 const MIN_FREQ: f32 = 00.0;
 const MAX_FREQ: f32 = 20_000.0;
-const AVG_FACTOR: f32 = 2.0;
 
 #[wasm_bindgen]
 pub struct MaxFreq {
@@ -119,16 +118,37 @@ pub fn get_data(analyser: &AnalyserNode) -> JsValue {
 
 fn get_peaks_intern(analyser: &AnalyserNode) -> Vec<PeakEntry> {
     let data = get_data_intern(analyser);
-    let avg: f32 = data.iter().map(|v| v.y).sum::<f32>() / data.len() as f32;
-    let avg = avg * AVG_FACTOR;
+    //let avg: f32 = data.iter().map(|v| v.y).sum::<f32>() / data.len() as f32;
+    let mut max = 0f32;
 
     // Collect all peaks higher than `avg`
     let mut peaks = Vec::new();
+    let mut last_x = 0.0;
+    let mut last_y = std::f32::INFINITY;
+    // If we are currently ascending
+    let mut ascending = false;
     for (index, &DataEntry { x, y }) in data.iter().enumerate() {
-        if y > avg {
-            peaks.push(PeakEntry { x, y, index });
+        if y > max / 3.0 {
+            if y > max {
+                max = y;
+            }
+
+            // The last point is a peak
+            if y < last_y && ascending {
+                peaks.push(PeakEntry {
+                    x: last_x,
+                    y: last_y,
+                    index: index - 1,
+                });
+            }
+            ascending = y >= last_y;
+            last_x = x;
+            last_y = y;
         }
     }
+
+    peaks.retain(|PeakEntry { y, .. }| *y > max / 3.0);
+
     peaks
 }
 
@@ -175,7 +195,7 @@ const NOTES: &[&str] = &[
 
 #[wasm_bindgen]
 pub fn note_for_frequency(frequency: f32) -> String {
-    let a4index = 46;
+    let a4index = 58;
     let note_diff = (12f32 * (frequency / 440f32).log2()).round() as i32;
     if note_diff < -a4index || (a4index + note_diff) as usize >= NOTES.len() {
         return "^A,,,,,,,,,".to_string();
