@@ -35,66 +35,75 @@ extern "C" {
     fn log(s: &str);
 }
 
-#[wasm_bindgen]
-pub fn get_max_frequency(analyser: &AnalyserNode) -> f32 {
-    //let mut data = vec![0f32; analyser.frequency_bin_count() as usize];
-    //analyser.get_float_frequency_data(&mut data);
-    let mut data = vec![0f32; analyser.fft_size() as usize];
-    analyser.get_float_time_domain_data(&mut data);
-    let plan = Plan::new(Operation::Forward, data.len());
-    data.transform(&plan);
-    let mut complex = dft::unpack(&data);
-    let len = complex.len() / 4;
-    let ft_res = complex.drain(..).take(len)
-        .map(|c| c.re).collect::<Vec<_>>();
-    let data = ft_res;
-    // log(&format!("{:?}", data));
+const MIN_FREQ: f32 = 80.0;
+const MAX_FREQ: f32 = 20_000.0;
 
-    // Search maximum
-    if let Some(m) = data.iter().cloned().enumerate()
-        .max_by(|(_, d1), (_, d2)| {
-        if d1 > d2 {
-            Ordering::Greater
-        } else if d1 < d2 {
-            Ordering::Less
-        } else {
-            Ordering::Equal
-        }
-    }) {
-        let rate = analyser.context().sample_rate();
-        get_freq(m.0, rate, data.len())
-    } else {
-        -1.0
+#[wasm_bindgen]
+pub struct FreqData {
+    pub min: f32,
+    pub max: f32,
+    data: Vec<f32>,
+}
+
+#[wasm_bindgen]
+pub struct MaxFreq {
+    /// The maximum frequency.
+    pub freq: f32,
+    /// The volume in db.
+    pub val: f32,
+}
+
+#[wasm_bindgen]
+impl FreqData {
+    pub fn get_data(&self) -> Vec<f32> {
+        self.data.clone()
     }
 }
 
 #[wasm_bindgen]
-pub fn get_data(analyser: &AnalyserNode) -> Vec<f32> {
+pub fn get_max_frequency(analyser: &AnalyserNode) -> MaxFreq {
+    let data = get_data(analyser);
+    let bin_delta = (data.max - data.min) / data.data.len() as f32;
+
+    // Search maximum
+    let (i, val) = data.data.iter().cloned().enumerate()
+        .max_by(|(_, d1), (_, d2)| {
+            if d1 > d2 {
+                Ordering::Greater
+            } else if d1 < d2 {
+                Ordering::Less
+            } else {
+                Ordering::Equal
+            }
+        }).unwrap();
+    let freq = data.min + (i as f32 + 0.5) * bin_delta;
+    MaxFreq { freq, val }
+}
+
+#[wasm_bindgen]
+pub fn get_data(analyser: &AnalyserNode) -> FreqData {
     let mut data = vec![0f32; analyser.fft_size() as usize];
     analyser.get_float_time_domain_data(&mut data);
 
     let plan = Plan::new(Operation::Forward, data.len());
     data.transform(&plan);
     let mut complex = dft::unpack(&data);
-    let len = complex.len();
-    let ft_res = complex.drain(..).take(len)
+    let ft_res = complex.drain(..)
         .map(|c| c.norm()).collect::<Vec<_>>();
-    ft_res
-}
 
-#[wasm_bindgen]
-pub fn analyse_audio(analyser: &AnalyserNode) {
-    let freq = get_max_frequency(analyser);
-    if freq < 0f32 { return; }
-    /* let rate = analyser.context().sample_rate();
-    let freq = get_freq2(m.0, rate, data.len());
-    log(&format!("Maximum (level: {:.3}, freq: {}): {}", m.1, freq,
-        note_for_frequency(freq))); */
-}
-
-fn get_freq(bin: usize, rate: f32, bins: usize) -> f32 {
+    let rate = analyser.context().sample_rate();
+    let bins = ft_res.len();
     let bin_delta = rate / (bins as f32) / 2f32;
-    (bin as f32 + 0.5) * bin_delta
+    // Cut off left and right
+    let start = (MIN_FREQ / bin_delta) as usize;
+    let end = ft_res.len() - (((rate / 2f32 - MAX_FREQ) / bin_delta) as usize + 1);
+    let data = ft_res[start..end].to_vec();
+
+    FreqData {
+        min: start as f32 * bin_delta,
+        max: end as f32 * bin_delta,
+        data,
+    }
 }
 
 #[wasm_bindgen]
