@@ -63,7 +63,7 @@ function update_chart() {
     let dataPoints = wasm.get_data(analyser);
     //console.log(dataArray.max);
     var peaks = wasm.get_peaks(analyser);
-    this_y_max = this_y_max * 0.95 + peaks.max * 0.05;
+    this_y_max = this_y_max * 0.97 + peaks.max * 0.03;
     peaks = peaks.peaks;
     for(var obj in peaks) {
         //dataPoints[peaks[obj].index].markerColor = "red";
@@ -73,7 +73,7 @@ function update_chart() {
     // The following line does not work but is needed for functionality
     //console.log(performanceChart.axisY[0].maximum);
     performanceChart.options.data = [{type: "line", dataPoints: dataPoints}];
-    performanceChart.options.axisY.maximum = this_y_max;
+    performanceChart.options.axisY.maximum = this_y_max * 1.3;
     performanceChart.render();
 
     let update_chart_end = new Date();
