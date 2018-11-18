@@ -35,7 +35,7 @@ extern "C" {
     fn log(s: &str);
 }
 
-const MIN_FREQ: f32 = 80.0;
+const MIN_FREQ: f32 = 00.0;
 const MAX_FREQ: f32 = 20_000.0;
 
 #[wasm_bindgen]
@@ -77,6 +77,7 @@ pub fn get_max_frequency(analyser: &AnalyserNode) -> MaxFreq {
             }
         }).unwrap();
     let freq = data.min + (i as f32 + 0.5) * bin_delta;
+    log(&format!("i: {} -> {}     (Del: {})", i, freq, bin_delta));
     MaxFreq { freq, val }
 }
 
@@ -93,10 +94,10 @@ pub fn get_data(analyser: &AnalyserNode) -> FreqData {
 
     let rate = analyser.context().sample_rate();
     let bins = ft_res.len();
-    let bin_delta = rate / (bins as f32) / 2f32;
+    let bin_delta = rate / (bins as f32);
     // Cut off left and right
     let start = (MIN_FREQ / bin_delta) as usize;
-    let end = ft_res.len() - (((rate / 2f32 - MAX_FREQ) / bin_delta) as usize + 1);
+    let end = ft_res.len() - (((rate - MAX_FREQ) / bin_delta) as usize);
     let data = ft_res[start..end].to_vec();
 
     FreqData {
@@ -145,7 +146,11 @@ const NOTES: &[&str] = &[
 #[wasm_bindgen]
 pub fn note_for_frequency(frequency: f32) -> String {
     let a4index = 46;
-    let note_diff = (12f32 * (frequency / 440f32).log2()).round() as usize;
-    let index = a4index + note_diff;
+    let note_diff = (12f32 * (frequency / 440f32).log2()).round() as i32;
+    if note_diff < -a4index || (a4index + note_diff) as usize >= NOTES.len() {
+        return "^A,,,,,,,,,".to_string();
+    }
+    let index = (a4index + note_diff) as usize;
+    log(&format!("{} -> {}", frequency, NOTES[index]));
     NOTES[index].to_string()
 }

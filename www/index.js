@@ -36,7 +36,7 @@ function update_notes() {
     var freq = max_freq.freq;
     var note = wasm.note_for_frequency(freq);
 
-    if (note.endsWith(",,") || note.endsWith("''")) {
+    if (note.endsWith(",,,") || note.endsWith("''")) {
       note = "z"
     }
 
