@@ -1,3 +1,5 @@
+#![feature(const_vec_new)]
+
 extern crate cfg_if;
 extern crate dft;
 extern crate futures;
@@ -49,7 +51,7 @@ pub struct MaxFreq {
     pub val: f32,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 struct DataEntry {
     /// The frequency
     x: f32,
@@ -57,7 +59,7 @@ struct DataEntry {
     y: f32,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 struct PeakEntry {
     /// The frequency
     x: f32,
@@ -74,9 +76,11 @@ struct PeakResult {
     peaks: Vec<PeakEntry>,
 }
 
+static mut DATA: Vec<DataEntry> = Vec::new();
+
 #[wasm_bindgen]
-pub fn get_max_frequency(analyser: &AnalyserNode) -> MaxFreq {
-    let data = get_data_intern(analyser);
+pub fn get_max_frequency(_: &AnalyserNode) -> MaxFreq {
+    let data = unsafe { &DATA };
     // Search maximum
     let d = data.iter().max_by(|d1, d2| {
         if d1.y > d2.y {
@@ -91,7 +95,7 @@ pub fn get_max_frequency(analyser: &AnalyserNode) -> MaxFreq {
     MaxFreq { freq: d.x, val: d.y }
 }
 
-fn get_data_intern(analyser: &AnalyserNode) -> Vec<DataEntry> {
+fn get_data_intern(analyser: &AnalyserNode) {
     let mut data = vec![0f32; analyser.fft_size() as usize];
     analyser.get_float_time_domain_data(&mut data);
 
@@ -107,24 +111,26 @@ fn get_data_intern(analyser: &AnalyserNode) -> Vec<DataEntry> {
     // Cut off left and right
     let start = (MIN_FREQ / bin_delta) as usize;
     let end = ft_res.len() - (((rate - MAX_FREQ) / bin_delta) as usize);
-    let data = &ft_res[start..end];
+    let res = &ft_res[start..end];
 
-    let mut res = Vec::with_capacity(data.len());
-    let mut x = (start as f32 + 0.5) * bin_delta;
-    for &y in data {
-        res.push(DataEntry { x, y });
-        x += bin_delta;
+    unsafe {
+        DATA = Vec::with_capacity(res.len());
+        let mut x = (start as f32 + 0.5) * bin_delta;
+        for &y in res {
+            DATA.push(DataEntry { x, y });
+            x += bin_delta;
+        }
     }
-    res
 }
 
 #[wasm_bindgen]
 pub fn get_data(analyser: &AnalyserNode) -> JsValue {
-    JsValue::from_serde(&get_data_intern(analyser)).unwrap()
+    get_data_intern(analyser);
+    unsafe { JsValue::from_serde(&DATA).unwrap() }
 }
 
-fn get_peaks_intern(analyser: &AnalyserNode) -> PeakResult {
-    let data = get_data_intern(analyser);
+fn get_peaks_intern() -> PeakResult {
+    let data = unsafe { &DATA };
     //let avg: f32 = data.iter().map(|v| v.y).sum::<f32>() / data.len() as f32;
     let mut max = 0f32;
 
@@ -135,33 +141,35 @@ fn get_peaks_intern(analyser: &AnalyserNode) -> PeakResult {
     // If we are currently ascending
     let mut ascending = false;
     for (index, &DataEntry { x, y }) in data.iter().enumerate() {
-        if y > max / 3.0 {
-            if y > max {
-                max = y;
-            }
-
-            // The last point is a peak
-            if y < last_y && ascending {
-                peaks.push(PeakEntry {
-                    x: last_x,
-                    y: last_y,
-                    index: index - 1,
-                });
-            }
-            ascending = y >= last_y;
-            last_x = x;
-            last_y = y;
+        // The last point is a peak
+        if y < last_y && ascending {
+            peaks.push(PeakEntry {
+                x: last_x,
+                y: last_y,
+                index: index - 1,
+            });
         }
+        if y > max {
+            max = y;
+        }
+
+        ascending = y >= last_y;
+        last_x = x;
+        last_y = y;
     }
 
     peaks.retain(|PeakEntry { y, .. }| *y > max / 3.0);
+
+    if peaks.len() > 5 {
+        peaks.clear();
+    }
 
     PeakResult { max, peaks }
 }
 
 #[wasm_bindgen]
-pub fn get_peaks(analyser: &AnalyserNode) -> JsValue {
-    JsValue::from_serde(&get_peaks_intern(analyser)).unwrap()
+pub fn get_peaks(_: &AnalyserNode) -> JsValue {
+    JsValue::from_serde(&get_peaks_intern()).unwrap()
 }
 
 #[wasm_bindgen]

@@ -67,7 +67,6 @@ function update_chart() {
     var peaks = wasm.get_peaks(analyser);
     this_y_max = peaks.max*1.1;
     peaks = peaks.peaks;
-    console.log(peaks.length);
     for(var obj in peaks) {
         //dataPoints[peaks[obj].index].markerColor = "red";
         //dataPoints[peaks[obj].index].markerType = "triangle";
