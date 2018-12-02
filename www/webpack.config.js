@@ -11,6 +11,8 @@ module.exports = {
   plugins: [
     new CopyWebpackPlugin([
       'index.html',
+      'favicon.ico',
+      'favicon.svg',
       'bootstrap.min.css',
       'bootstrap-4.1.min.js',
       'canvasjs.min.js',
